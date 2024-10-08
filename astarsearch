@@ -1,0 +1,291 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+
+namespace WinFormsApp1
+{
+    static class ASTAR_Search_Algorithm
+    {
+        static private List<Node> ClosedList = new();
+        static private List<Node> OpenList = new();
+        static private List<Node> BlackList = new();
+
+        /// <summary>
+        /// the primary algorithm that calls all the other functions
+        /// </summary>
+        /// <param name="maze"></param>
+        static internal List<Node> Algorithm(Maze maze)
+        {
+            OpenList.Clear();
+            ClosedList.Clear();
+           
+            BlackList.Clear();
+
+            int best_Node_index = 0;
+            bool do_algorithm = true;
+
+            ClosedList.Add(new Node(maze.start_location));
+            ClosedList[0].CostToGetTo = 0;
+            ClosedList[0].HueristicValue = (Math.Abs(0 - maze.exit_location[0]) + Math.Abs(1 - maze.exit_location[1]));
+
+            while (do_algorithm)
+            {
+                OpenList.Clear();
+
+                FindadjacentNodes(maze);
+
+                if (OpenList.Count > 0)
+                {
+                    best_Node_index = choosenextNode();
+                    if (OpenList[best_Node_index].location[0] == maze.exit_location[0] && OpenList[best_Node_index].location[1] == maze.exit_location[1]) { do_algorithm = false; }
+                    ClosedList.Add(new Node(OpenList[best_Node_index].location, OpenList[best_Node_index].HueristicValue, OpenList[best_Node_index].CostToGetTo));
+                }
+                else if (OpenList.Count == 0)
+                {
+                    BlackList.Add(new Node(ClosedList.Last().location));
+                    ClosedList.RemoveAt(ClosedList.Count - 1);
+                }
+            }
+
+            maze.solution_length = GetSolutionLength();
+            return ClosedList; 
+
+        }
+        /// <summary>
+        /// Calculates the length of the AI solution
+        /// </summary>
+        /// <returns></returns>
+        static private int GetSolutionLength()
+        {
+            int length = 0;
+
+
+            for (int n = 0; n < ClosedList.Count - 1; n++)
+            {
+                if (ClosedList[n + 1].location[0] == ClosedList[n].location[0])
+                {
+                    length += Math.Abs(ClosedList[n + 1].location[1] - ClosedList[n].location[1]);
+                }
+                else if (ClosedList[n].location[1] == ClosedList[n + 1].location[1])
+                {
+                    length += Math.Abs(ClosedList[n + 1].location[0] - ClosedList[n].location[0]);
+                }
+
+            }
+
+            return length + 1;
+        }
+        /// <summary>
+        /// Calls the calc heuristics function and then selects the best Node to go to
+        /// </summary>
+        /// <param name="maze"></param>
+        /// <returns></returns>
+        /// 
+        static private int choosenextNode()
+        {
+            int enumerator = 0;
+            int best_index = 0;
+            int best_value = 0;
+            enumerator = 0;
+            best_value = OpenList[0].HueristicValue;
+            
+            foreach (Node Node in OpenList)
+            {
+                if (OpenList[enumerator].HueristicValue < best_value)
+                {
+                    best_value = OpenList[enumerator].HueristicValue;
+                    best_index = enumerator;
+                }
+                enumerator++;
+            }
+            return best_index;
+
+        }
+
+        /// <summary>
+        /// does the math for the hueristic values		
+        /// </summary>
+        /// <param name="enumerator"></param>
+        /// <param name="maze"></param>
+        /// <param name="firstloopcheck"></param>
+        /// 
+        static private void CalculateHueristic(Maze maze)
+        {
+            foreach (Node check in OpenList)
+            {
+               //OpenList[OpenList.Count - 1].CostToGetTo = (Math.Abs(OpenList[OpenList.Count - 1].location[0] - ClosedList.Last().location[0]) + Math.Abs(OpenList[OpenList.Count - 1].location[1] - ClosedList.Last().location[1]));
+                OpenList[OpenList.Count - 1].CostToGetTo = 0;
+                OpenList[OpenList.Count - 1].HueristicValue = OpenList[OpenList.Count - 1].CostToGetTo + (Math.Abs(OpenList[OpenList.Count - 1].location[0] - maze.exit_location[0]) + Math.Abs(OpenList[OpenList.Count - 1].location[1] - maze.exit_location[1]));
+            }
+        }
+
+        /// <summary>
+        /// finds the adjacent Nodes to the current Nodes
+        /// </summary>
+        /// <param name="n"></param>
+        /// <param name="VisitedNodes"></param>
+        /// <param name="maze"></param>
+        /// <param name="counter"></param>
+        /// 
+
+        static private void FindadjacentNodes(Maze maze)
+        {
+            int[] nextcell = new int[2];
+            int count = 1;
+            bool go = true;
+
+            while (go)
+            {
+                nextcell = new int[] { ClosedList.Last().location[0], ClosedList.Last().location[1] + count };
+                go = NodeFindFunction(nextcell, maze, ref count, 0);
+            }
+            go = true;
+            count = 1;
+            while (go)
+            {
+                nextcell = new int[] { ClosedList.Last().location[0] + count, ClosedList.Last().location[1] };
+                go = NodeFindFunction(nextcell, maze, ref count, 1);
+            }
+            count = 1;
+            go = true;
+            while (go)
+            {
+                nextcell = new int[] { ClosedList.Last().location[0], ClosedList.Last().location[1] - count };
+                go = NodeFindFunction(nextcell, maze, ref count, 2);
+            }
+            go = true;
+            count = 1;
+            while (go)
+            {
+                nextcell = new int[] { ClosedList.Last().location[0] - count, ClosedList.Last().location[1] };
+                go = NodeFindFunction(nextcell, maze, ref count, 3);
+            }
+
+        }
+
+
+        /// <summary>
+        /// a sub process of FindNodes
+        /// </summary>
+        /// <param name="nextcell"></param>
+        /// <param name="maze"></param>
+        /// <param name="count"></param>
+        /// <param name="n"></param>
+        /// <returns></returns>
+        static private bool NodeFindFunction(int[] nextcell, Maze maze, ref int count, int n)
+        {
+            if (Acceptable(nextcell, maze))
+            {
+                if (CheckifNode(nextcell, maze, n))
+                {
+                    OpenList.Add(new Node(new int[] { nextcell[0], nextcell[1] }));
+                    CalculateHueristic(maze);
+                    CheckIfAlreadyInLists();
+                    return false;
+                }
+                count++;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// checks if the Node added to the open list is already in the open or closed list
+        /// </summary>
+        static private void CheckIfAlreadyInLists()
+        {
+
+            int i = 0;
+            bool doloop = true;
+
+            while (OpenList.Count > 0 && doloop && i < ClosedList.Count)
+            {
+                if (OpenList.Last().location[0] == ClosedList[i].location[0] && OpenList.Last().location[1] == ClosedList[i].location[1])
+                {
+                    
+                    OpenList.RemoveAt(OpenList.Count - 1);
+                    doloop = false;
+                }
+                i++;
+            }
+
+            i = 0;
+
+        }
+
+        /// <summary>
+        /// checks that the location is not a wall and not out of bounds
+        /// </summary>
+        /// <param name="nextcell"></param>
+        /// <param name="maze"></param>
+        /// <returns></returns>
+        /// 
+        static private bool Acceptable(int[] nextcell, Maze maze)
+        {
+
+            if (nextcell[0] >= maze.Size || nextcell[1] >= maze.Size)
+            {
+                return false;
+            }
+            else if (nextcell[0] <= 0 || nextcell[1] <= 0)
+            {
+                return false;
+            }
+            else if (maze.Bitfield[nextcell[0], nextcell[1]].type == 1)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// checks if it can go in a direction other than the one it came from, thus checking for a Node
+        /// </summary>
+        /// <param name="nextcell"></param>
+        /// <param name="maze"></param>
+        /// <param name="n"></param>
+        /// <returns></returns>
+        /// 
+        static private bool CheckifNode(int[] nextcell, Maze maze, int n)
+        {
+            foreach (Node Node in BlackList)
+            {
+                if (Node.location[0] == nextcell[0] && Node.location[1] == nextcell[1])
+                {
+                    return false;
+                }
+            }
+
+            if (nextcell[0] == maze.exit_location[0] && nextcell[1] == maze.exit_location[1])
+            {
+                return true;
+            }
+            if (maze.Bitfield[nextcell[0], nextcell[1] + 1].type == 0 && n != 0 && n != 2 )
+            {
+                return true;
+            }
+            if (maze.Bitfield[nextcell[0] + 1, nextcell[1]].type == 0 && n != 1 && n != 3)
+            {
+                return true;
+            }
+            if (maze.Bitfield[nextcell[0], nextcell[1] - 1].type == 0 && n != 2 && n != 0)
+            {
+                return true;
+            }
+            if (maze.Bitfield[nextcell[0] - 1, nextcell[1]].type == 0 && n != 3 && n != 1)
+            {
+                return true;
+            }
+            return false;
+        }
+    }
+}
