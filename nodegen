@@ -1,0 +1,22 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WinFormsApp1
+{
+    internal class Cell
+    {
+        internal int[] Location { get; private set; }
+        internal int type { get; set; }
+        internal bool visited { get; set; }
+
+        internal Cell(int[] location,int type)
+        {
+            this.Location = location;
+            this.type = type;
+            visited = false;
+        }
+    }
+}
