@@ -1,0 +1,218 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WinFormsApp1
+{
+    static internal class MazeGenerator
+    {
+        static private Stack<int> RandomMoves = new Stack<int>();
+        static private Stack<int[]> Movements = new Stack<int[]>();
+
+        /// <summary>
+        /// The main algorithm which calls all the other functions for creating the maze
+        /// </summary>
+        /// <param name="Size_Y"></param>
+        /// <param name="Size_X"></param>
+        /// <param name="Bitfield_local1"></param>
+        /// <returns></returns>
+        static internal Maze Algorithm(Maze maze)
+        {
+
+            Movements.Clear();
+           
+            Movements.Push(new int[] { 1, 1 });
+          
+            maze.Bitfield[1, 1].visited = true;
+
+            bool loop = true;
+
+            while (loop)
+            {
+                RandomMoves = GetMoveList();
+                bool loop2 = true;
+
+                while (loop2)
+                {
+
+                    switch (CheckIfValid(maze))
+                    {
+                        case 1:
+                            RandomMoves.Pop();
+                            break;
+                        case 2:
+                            loop2 = false;
+
+                            CreatePassage(ref maze);
+                            int[] temp1 = GetNextCell();
+                            Movements.Push(new int[2] { temp1[0], temp1[1] });
+                            maze.Bitfield[temp1[0], temp1[1]].visited = true;
+                            if ((Convert.ToInt16(Movements.Peek()[0])) == 1 && (Convert.ToInt16(Movements.Peek()[1])) == 1)
+                            {
+                                loop = false;
+                                loop2 = false;
+                            }
+
+                            break;
+
+                        case 3:
+                            if ((Convert.ToInt16(Movements.Peek()[0])) == 1 && (Convert.ToInt16(Movements.Peek()[1])) == 1)
+                            {
+                                loop = false;
+                                loop2 = false;
+                            }
+                            Movements.Pop();
+                            loop2 = false;
+
+                            break;
+                    }
+
+
+
+
+                }
+            }
+            maze.displaymaze = true;
+            return maze;
+        }
+
+        /// <summary>
+        /// creates a passage between two points in the maze
+        /// </summary>
+        /// <param name="maze"></param>
+        static private void CreatePassage(ref Maze maze)
+        {
+            int[] temp = new int[2] { Movements.Peek()[0], Movements.Peek()[1] };
+
+            switch (RandomMoves.Peek())
+            {
+                case 1:
+                    temp[1] += 1;
+                    maze.Bitfield[temp[0], temp[1]].type = 0;
+                    break;
+                case 2:
+
+                    temp[0] += 1;
+                    maze.Bitfield[temp[0], temp[1]].type = 0;
+                    break;
+                case 3:
+                    temp[1] -= 1;
+                    maze.Bitfield[temp[0], temp[1]].type = 0;
+                    break;
+                case 4:
+                    temp[0] -= 1;
+                    maze.Bitfield[temp[0], temp[1]].type = 0;
+                    break;
+            }
+
+        }
+        /// <summary>
+        /// checks if a point in the maze is valid to move into 
+        /// </summary>
+        /// <param name="maze"></param>
+        /// <returns></returns>
+        static private int CheckIfValid(Maze maze)
+        {
+            if (RandomMoves.Count != 0)
+            {
+                int[] temp1 = GetNextCell();
+                int[] nextcell = new int[2] { temp1[0], temp1[1] };
+                int count = 0;
+                Random rnd = new Random();
+                if (nextcell[1] >= (maze.Size - 1))
+                {
+
+                    return 1;
+                }
+                else if (nextcell[0] >= (maze.Size - 1))
+                {
+
+                    return 1;
+                }
+                else if (nextcell[0] < 0)
+                {
+
+                    return 1;
+                }
+                else if (nextcell[1] < 0)
+                {
+
+                    return 1;
+                }
+                else if (nextcell[0] == 0 || nextcell[1] == 0)
+                {
+
+                    return 1;
+                }
+                else if (maze.Bitfield[nextcell[0], nextcell[1]].visited)
+                {
+
+                    if(rnd.Next(0,100) != 1)
+                    {
+                        return 1;
+                    }
+
+
+                }
+                return 2;
+            }
+            else
+            {
+                return 3;
+            }
+        }
+
+        /// <summary>
+        /// gets a random list of movement directions 
+        /// </summary>
+        /// <returns></returns>
+        static private Stack<int> GetMoveList()
+        {
+            RandomMoves.Clear();
+            Random rnd = new Random();
+                while (RandomMoves.Count != 4)
+                {
+                    int number = rnd.Next(1, 5);
+                    if (RandomMoves.Contains(number) == false)
+                    {
+                        RandomMoves.Push(number);
+                      
+                    }
+                }
+            
+            return RandomMoves;
+        }
+        /// <summary>
+        /// gets the next cell that the generator will be in if it moves in a specified direction
+        /// </summary>
+        /// <returns></returns>
+        static private int[] GetNextCell()
+        {
+
+            int[] temp = new int[2] { Movements.Peek()[0], Movements.Peek()[1] };
+
+            switch (RandomMoves.Peek())
+            {
+                case 1:
+                    temp[1] = temp[1] + 2;
+
+                    break;
+                case 2:
+                    temp[0] = temp[0] + 2;
+
+                    break;
+                case 3:
+                    temp[1] = temp[1] - 2;
+
+                    break;
+                case 4:
+                    temp[0] = temp[0] - 2;
+                    break;
+            }
+
+            return temp;
+        }
+    }
+}
