@@ -1,0 +1,381 @@
+using System.Linq.Expressions;
+using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+
+namespace WinFormsApp1
+{
+    public partial class Form1 : Form
+    {
+
+        private PointF point1 = new();
+        private PointF point2 = new();
+        private Brush brush3 = new SolidBrush(Color.Green);
+        private Brush brush = new SolidBrush(Color.Red);
+        private Brush brush2 = new SolidBrush(Color.Black);
+        private List<Maze> mazes = new List<Maze>();
+        private int Draw_Maze_Index;
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            Generate_TextBox.Visible = false;
+            Generate_TextBox.Enabled = false;
+            label1.Visible = false;
+            MainMessageBox.Enabled = true;
+            MainMessageBox.ReadOnly = true;
+            Save_TextBox.Enabled = false;
+            label2.Visible = false;
+            Save_TextBox.Visible = false;
+            Save_TextBox.Enabled = false;
+        }
+        private void Clear_Button_Click(object sender, EventArgs e) //clear the screen
+        {
+            Draw_Maze_Index = -1;
+            MainMessageBox.Clear();
+            this.Invalidate();
+        }
+        private void Generate_Button_Click(object sender, EventArgs e) //brings up the textbox for entering maze size 
+        {
+            Generate_TextBox.Visible = true;
+            Generate_TextBox.Enabled = true;
+            label1.Visible = true;
+        }
+        private void AI_Solve_Button_Click(object sender, EventArgs e) // Generate AI solution
+        {
+            try
+            {
+                if (mazes[Draw_Maze_Index].displaymaze == true)
+                {
+                    mazes[Draw_Maze_Index].AISoution = new List<Node>(ASTAR_Search_Algorithm.Algorithm(mazes[Draw_Maze_Index]));
+                    mazes[Draw_Maze_Index].draw_route = true;
+                    MainMessageBox.Clear();
+                    MainMessageBox.Text = "AIsolution length = " + Convert.ToString(mazes[Draw_Maze_Index].solution_length);
+
+                    if (mazes[Draw_Maze_Index].UserSuccess == true)
+                    {
+                        MainMessageBox.Text = "User Solution length = " + mazes[Draw_Maze_Index].user_solution_length;
+                        MainMessageBox.Text += Environment.NewLine;
+                        MainMessageBox.Text += "AI Solution length = " + mazes[Draw_Maze_Index].solution_length;
+                        if (mazes[Draw_Maze_Index].user_solution_length < mazes[Draw_Maze_Index].solution_length)
+                        {
+                            MainMessageBox.Text += " Your solution is " + Convert.ToString(mazes[Draw_Maze_Index].solution_length - mazes[Draw_Maze_Index].user_solution_length) + " shorter";
+                        }
+                        else
+                        {
+                            MainMessageBox.Text += " Your solution is " + Convert.ToString(mazes[Draw_Maze_Index].user_solution_length - mazes[Draw_Maze_Index].solution_length) + " longer";
+                        }
+                    }
+                    this.Invalidate();
+                }
+            }
+            catch(Exception) { MainMessageBox.Text = "please generate a valid maze and try again"; }
+            
+        }
+        private void Save_Button_Click(object sender, EventArgs e) //brings up save texbox
+        {
+            if (mazes.Count > 0 && Draw_Maze_Index > -1)
+            {
+                label2.Visible = true;
+                Save_TextBox.Visible = true;
+                Save_TextBox.Enabled = true;
+            }
+            else
+            {
+                MainMessageBox.Text = "Please generate a valid maze and try again";
+            }
+        }
+        private void Save_TextBox_KeyDown(object sender, KeyEventArgs e) //save textbox
+        {
+            try
+            {
+                if (e.KeyCode == Keys.Enter && Save_TextBox.TextLength > 0)
+                {
+                    string printline = "";
+                    string saveLocation = "";
+
+                    FolderBrowserDialog folderbrowser = new();
+
+
+                    folderbrowser.InitialDirectory = @"C:";
+
+                    folderbrowser.ShowDialog();
+
+                    if (folderbrowser.SelectedPath != "")
+                    {
+                        saveLocation = folderbrowser.SelectedPath;
+                        saveLocation += @"\";
+                        saveLocation += Save_TextBox.Text;
+                        saveLocation += ".txt";
+                    }
+
+                    using (StreamWriter writer = new StreamWriter(saveLocation))
+                    {
+                        for (int n = 0; n < mazes[Draw_Maze_Index].Size; n++)
+                        {
+                            for (int i = 0; i < mazes[Draw_Maze_Index].Size; i++)
+                            {
+                                printline += mazes[Draw_Maze_Index].Bitfield[i, n].type;
+                            }
+                            writer.WriteLine(printline);
+                            printline = "";
+                        }
+
+                    }
+                    label2.Visible = false;
+                    Save_TextBox.Visible = false;
+                    Save_TextBox.Enabled = false;
+                    Save_TextBox.Clear();
+                }
+          
+            }
+            catch (Exception)
+            {
+
+                MainMessageBox.Text = "error whilst saving file";
+            }
+
+        }
+        private void Load_Button_Click(object sender, EventArgs e) //loads a saved maze
+        {
+            try
+            {
+                OpenFileDialog openFileDialog1 = new OpenFileDialog();
+                openFileDialog1.Title = "Select File";
+                openFileDialog1.InitialDirectory = @"C:|";
+                openFileDialog1.Filter = "Text File (*.txt)|*.txt";
+                openFileDialog1.FilterIndex = 1;
+                openFileDialog1.ShowDialog();
+
+
+                if (openFileDialog1.FileName != "")
+                {
+                    string line = "";
+                    using (StreamReader reader = new StreamReader(openFileDialog1.FileName))
+                    {
+                        line = reader.ReadLine();
+                        if (line.Length > 0)
+                        {
+
+                            Draw_Maze_Index = mazes.Count();
+                            mazes.Add(new Maze(line.Length, this.Height));
+                            for (int n = 0; n < mazes[Draw_Maze_Index].Size; n++)
+                            {
+                                for (int x = 0; x < mazes[Draw_Maze_Index].Size; x++)
+                                {
+                                    mazes[Draw_Maze_Index].Bitfield[x, n].type = Convert.ToInt32(line[x]) - 48;
+                                }
+
+                                line = reader.ReadLine();
+                            }
+                            mazes[Draw_Maze_Index].displaymaze = true;
+                            MainMessageBox.Clear();
+                            this.Invalidate();
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+                MainMessageBox.Text = "error while loading file";
+            }
+
+        }
+        private void UserSolution_Button_Click(object sender, EventArgs e) //initializes plotting own path
+        {
+            try
+            {
+                if (mazes[Draw_Maze_Index].displaymaze == true)
+                {
+                    if (mazes[Draw_Maze_Index].allow_user_creation == false)
+                    {
+                        mazes[Draw_Maze_Index].allow_user_creation = true;
+                        mazes[Draw_Maze_Index].draw_route = false;
+                        this.Invalidate();
+                    }
+                    else
+                    {
+                        mazes[Draw_Maze_Index].allow_user_creation = false;
+                        mazes[Draw_Maze_Index].draw_usersolution = false;
+                    }
+                }
+                else
+                {
+                    MainMessageBox.Text = "please generate a valid maze and try again";
+                }
+            }
+            catch (Exception)
+            {
+                MainMessageBox.Text = "please generate a valid maze and try again";
+            }
+        }
+        private void Generate_TextBox_KeyDown(object sender, KeyEventArgs e) //generate textbox
+        {
+            int inputInt;
+            if (e.KeyCode == Keys.Enter && Generate_TextBox.TextLength > 0)
+            {
+                if (Int32.TryParse(Generate_TextBox.Text, out inputInt) == true && inputInt > 2)
+                {
+                    if (inputInt % 2 == 0)
+                    {
+                        inputInt--;
+                    }
+                    Generate_TextBox.Visible = false;
+                    Generate_TextBox.Enabled = false;
+                    label1.Visible = false;
+                    mazes.Add(MazeGenerator.Algorithm(new Maze(inputInt, this.Height)));
+                    MainMessageBox.Clear();
+                    Draw_Maze_Index = mazes.Count - 1;
+                    this.Invalidate();
+                }
+                else
+                {
+                    MainMessageBox.Text = "input not valid, please enter an integer greater than 2";
+                }
+                Generate_TextBox.Clear();
+            }
+        }
+        private void Form1_MouseClick(object sender, MouseEventArgs e) //detects when user clicks on the screen allowing them to plot a path
+        {
+            try
+            {
+                if (mazes[Draw_Maze_Index].UserSuccess == false && mazes[Draw_Maze_Index].allow_user_creation == true)
+                {
+                    int X = e.X;
+                    int Y = e.Y;
+                    int x_drawcoord = ((int)(X / mazes[Draw_Maze_Index].multiplier));
+                    int y_drawcoord = ((int)(Y / mazes[Draw_Maze_Index].multiplier));
+                    if (CreateUserSolution.CheckIfAlreadyBeen(x_drawcoord, y_drawcoord, mazes[Draw_Maze_Index]) == false)
+                    {
+                        mazes[Draw_Maze_Index].UserSolution.Pop();
+                        this.Invalidate();
+                    }
+                    else if (CreateUserSolution.CheckIfValidPoint(x_drawcoord, y_drawcoord, mazes[Draw_Maze_Index]))
+                    {
+                        mazes[Draw_Maze_Index].UserSolution.Push(new int[] { x_drawcoord, y_drawcoord });
+                        mazes[Draw_Maze_Index].draw_usersolution = true;
+                        if (mazes[Draw_Maze_Index].UserSolution.Peek()[0] == mazes[Draw_Maze_Index].exit_location[0] && mazes[Draw_Maze_Index].UserSolution.Peek()[1] == mazes[Draw_Maze_Index].exit_location[1])
+                        {
+                            mazes[Draw_Maze_Index].user_solution_length = mazes[Draw_Maze_Index].UserSolution.Count;
+                            mazes[Draw_Maze_Index].UserSuccess = true;
+                            MainMessageBox.Clear();
+                            MainMessageBox.Text = "Congratulations you";
+                            MainMessageBox.Text += Environment.NewLine + "solved the maze!";
+                            MainMessageBox.Text += Environment.NewLine;
+                            MainMessageBox.Text += Environment.NewLine;
+                            MainMessageBox.AppendText("Solution Length = " + mazes[Draw_Maze_Index].user_solution_length);
+                        }
+                        this.Invalidate();
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
+        private void Previous_Button_Click(object sender, EventArgs e)  //previous maze button
+        {
+            try
+            {
+                MainMessageBox.Clear();
+                if (Draw_Maze_Index - 1 >= 0 && mazes.Count > 1)
+                {
+                    Draw_Maze_Index--;
+                    if (mazes[Draw_Maze_Index].draw_route)
+                        MainMessageBox.Text = "AIsolution length = " + Convert.ToString(mazes[Draw_Maze_Index].solution_length);
+                    this.Invalidate();
+                }
+                else if (Draw_Maze_Index < 0)
+                {
+                    Draw_Maze_Index = 0;
+                    if (mazes[Draw_Maze_Index].draw_route)
+                        MainMessageBox.Text = "AIsolution length = " + Convert.ToString(mazes[Draw_Maze_Index].solution_length);
+                    this.Invalidate();
+                }
+            }
+            catch (Exception) { }
+        }
+        private void Next_Button_Click(object sender, EventArgs e) //next maze button
+        {
+            try
+            {
+                MainMessageBox.Clear();
+                if (Draw_Maze_Index + 1 <= mazes.Count - 1 && mazes.Count > 1)
+                {
+                    Draw_Maze_Index++;
+                    if (mazes[Draw_Maze_Index].draw_route)
+                        MainMessageBox.Text = "AIsolution length = " + Convert.ToString(mazes[Draw_Maze_Index].solution_length);
+                    this.Invalidate();
+                }
+                else if (Draw_Maze_Index < 0)
+                {
+                    Draw_Maze_Index = 0;
+                    if (mazes[Draw_Maze_Index].draw_route)
+                        MainMessageBox.Text = "AIsolution length = " + Convert.ToString(mazes[Draw_Maze_Index].solution_length);
+                    this.Invalidate();
+                }
+            }
+            catch (Exception) { }
+            
+        }
+        private void Form1_Resize(object sender, System.EventArgs e) //adjusts scale of maze when resizing with window. keeps window square
+        {
+            Control control = (Control)sender;
+            if (control.Size.Height != control.Size.Width)
+            {
+                control.Size = new Size(control.Size.Width, control.Size.Width);
+            }
+            foreach (Maze maze in mazes)
+            {
+                maze.calcMultiplier(this.Height);
+            }
+            this.Invalidate();
+        }
+        private void Form1_Paint(object sender, PaintEventArgs e) //controls the drawing of all the maze, ai and user solution graphics
+        {
+            try
+            {
+                if (mazes[Draw_Maze_Index].Bitfield.Length == (mazes[Draw_Maze_Index].Size * mazes[Draw_Maze_Index].Size) && mazes[Draw_Maze_Index].displaymaze == true && Draw_Maze_Index > -1)
+                {
+                    for (int y = 0; y < mazes[Draw_Maze_Index].Size; y++)
+                    {
+                        for (int x = 0; x < mazes[Draw_Maze_Index].Size; x++)
+                        {
+                            if (mazes[Draw_Maze_Index].Bitfield[x, y].type == 1)
+                            {
+                                e.Graphics.FillRectangle(brush, x * mazes[Draw_Maze_Index].multiplier, y * mazes[Draw_Maze_Index].multiplier, 1f * mazes[Draw_Maze_Index].multiplier, 1f * mazes[Draw_Maze_Index].multiplier);
+                            }
+                        }
+                    }
+                    if (mazes[Draw_Maze_Index].draw_usersolution && mazes[Draw_Maze_Index].UserSolution.Count > 0)
+                    {
+
+                        foreach (var point in mazes[Draw_Maze_Index].UserSolution)
+                        {
+                            e.Graphics.FillRectangle(brush2, point[0] * mazes[Draw_Maze_Index].multiplier, point[1] * mazes[Draw_Maze_Index].multiplier, 1f * mazes[Draw_Maze_Index].multiplier, 1f * mazes[Draw_Maze_Index].multiplier);
+                        }
+                    }
+                    if (mazes[Draw_Maze_Index].draw_route == true)
+                    {
+                        Pen pen3 = new Pen(brush3, (float)0.5 * mazes[Draw_Maze_Index].multiplier);
+                        for (int i = 0; i < mazes[Draw_Maze_Index].AISoution.Count - 1; i++)
+                        {
+                            point1.X = (float)(mazes[Draw_Maze_Index].AISoution[i].location[0] * mazes[Draw_Maze_Index].multiplier + 0.5 * mazes[Draw_Maze_Index].multiplier);
+                            point1.Y = (float)(mazes[Draw_Maze_Index].AISoution[i].location[1] * mazes[Draw_Maze_Index].multiplier + 0.5 * mazes[Draw_Maze_Index].multiplier);
+                            point2.X = (float)(mazes[Draw_Maze_Index].AISoution[i + 1].location[0] * mazes[Draw_Maze_Index].multiplier + 0.5 * mazes[Draw_Maze_Index].multiplier);
+                            point2.Y = (float)(mazes[Draw_Maze_Index].AISoution[i + 1].location[1] * mazes[Draw_Maze_Index].multiplier + 0.5 * mazes[Draw_Maze_Index].multiplier);
+                            e.Graphics.DrawLine(pen3, point1, point2);
+                        }
+                    }
+
+
+                }
+            }
+            catch (Exception) { }
+        }
+
+
+    }
+}
