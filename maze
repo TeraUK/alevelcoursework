@@ -1,0 +1,81 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WinFormsApp1
+{
+    internal class Maze
+    {
+        internal bool displaymaze { get; set; }
+        internal Cell[,] Bitfield { get; set; }
+        internal int Size { get; private set; }
+        internal float multiplier { get; private set; }
+        internal int[] exit_location { get; private set; }
+        internal int[] start_location { get; private set; }
+        internal bool draw_route { get; set; }
+        internal bool draw_usersolution { get; set; }
+        internal bool allow_user_creation { get; set; }
+        internal List<Node> AISoution { get; set; }
+        internal Stack<int[]> UserSolution { get; set; }
+        internal bool UserSuccess { get; set; }
+        internal int solution_length { get; set; }
+        internal int user_solution_length { get; set; }
+        internal Maze(int Size, int height)
+        {
+            AISoution = new List<Node>();
+            UserSolution = new Stack<int[]>();
+            UserSuccess = false;    
+            this.Size = Size;
+            displaymaze = false;
+            start_location = new int[] { 0, 1 };
+            exit_location = new int[] { 0, 0 };
+            exit_location = new int[] { Size - 1, Size - 2 };
+            Bitfield = new Cell[Size, Size];
+           
+
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    if (y == 0 || x == 0)
+                    {
+                        Bitfield[x, y] = new Cell(new int[] { x, y }, 1);
+                    }
+                    else if (y % 2 == 0 || x % 2 == 0)
+                    {
+                        Bitfield[x, y] = new Cell(new int[] { x, y }, 1);
+                    }
+                    else if ((y == Size) || (x == Size))
+                    {
+                        Bitfield[x, y] = new Cell(new int[] { x, y }, 1);
+                     
+                    }
+                    else
+                    {
+                        Bitfield[x, y] = new Cell(new int[] { x, y },  0);
+                   
+                    }
+
+
+                }
+            }
+
+            Bitfield[Size - 1, Size - 2].type = 0;
+            Bitfield[0, 1].type = 0;
+            calcMultiplier(height);
+            
+        }
+
+        internal void calcMultiplier(float height)
+        {
+            float SizeF = Size;
+            multiplier = (height - 180f) / SizeF;
+        }
+
+       
+
+    }
+}
