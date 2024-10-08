@@ -1,0 +1,58 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WinFormsApp1
+{
+    internal static class CreateUserSolution
+    {
+        
+        internal static bool CheckIfValidPoint(int x_drawcoord, int y_drawcoord, Maze maze)
+        {
+            try
+            {
+                int[] temp;
+                if (maze.UserSolution.TryPeek(out temp) != true)
+                {
+                    if (x_drawcoord == 0 && y_drawcoord == 1)
+                    { return true; }
+                    else
+                    { return false; }
+                }
+                if (maze.Bitfield[x_drawcoord, y_drawcoord].type != 1)
+                {
+                    if ((x_drawcoord == maze.UserSolution.Peek()[0] + 1 && y_drawcoord == maze.UserSolution.Peek()[1]) ^ (y_drawcoord == maze.UserSolution.Peek()[1] + 1 && x_drawcoord == maze.UserSolution.Peek()[0]) || (x_drawcoord == maze.UserSolution.Peek()[0] - 1 && y_drawcoord == maze.UserSolution.Peek()[1]) ^ (y_drawcoord == maze.UserSolution.Peek()[1] - 1 && x_drawcoord == maze.UserSolution.Peek()[0]))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            catch (Exception)
+            {
+                if (x_drawcoord == 0 && y_drawcoord == 1)
+                { return true; }
+                else
+                { return false; }
+            }
+         
+        }
+        internal static bool CheckIfAlreadyBeen(int x_drawcoord, int y_drawcoord, Maze maze)
+        {
+            try
+            {
+                 if (maze.UserSolution.Peek()[0] == x_drawcoord && maze.UserSolution.Peek()[1] == y_drawcoord)
+                 {
+                    return false;
+                 }
+              return true;
+            }
+            catch (Exception)
+            {
+                return true;
+            }
+        }
+    }
+}
