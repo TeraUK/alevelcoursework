@@ -1,10 +1,10 @@
-Maze Generator & A* Pathfinding Solver
+# Maze Generator & A* Pathfinding Solver
 
 A C# Windows Forms desktop application that procedurally generates solvable mazes, solves them with a custom A* search implementation, and lets a user race the algorithm by drawing their own path through the maze with the mouse.
 
 This project was built as the Non-Exam Assessment (NEA) for A-Level Computer Science.
 
-What it does
+## What it does
 
 The app is a small interactive tool rather than a script, run it and you get a live canvas you can generate, solve, play with, and save:
 
@@ -17,7 +17,7 @@ Save and reload any generated maze as a plain text grid.
 Browse history: step back and forward through every maze generated in the current session.
 
 
-Technical highlights
+## Technical highlights
 
 Maze generation (mazegen3): a randomised recursive-backtracking algorithm. It carves passages two cells at a time through a walled grid, picking a random unvisited neighbour at each step and backtracking when it hits a dead end, which guarantees a maze that is always solvable and has no disconnected areas.
 
@@ -29,7 +29,7 @@ Custom file format: mazes are saved and loaded as a plain grid of digits (wall/p
 
 Rendering: the maze, the user's path, and the AI's path are all drawn by hand with GDI+ (System.Drawing) inside the form's paint event, and the canvas keeps a square aspect ratio and rescales automatically when the window is resized.
 
-Tech stack
+## Tech stack
 
 
 Language: C#
@@ -38,7 +38,7 @@ Graphics: GDI+ (System.Drawing), custom rendering, no external UI or graphics li
 Core data structures: Stack<T>, List<T>, and hand-written Node/Cell/Maze classes
 
 
-Skills demonstrated
+## Skills demonstrated
 
 
 Implementing a classic search algorithm (A*) from scratch, including a custom heuristic and an optimisation to reduce the search space
